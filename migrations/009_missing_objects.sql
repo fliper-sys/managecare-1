@@ -40,6 +40,16 @@ CREATE INDEX IF NOT EXISTS idx_business_members_active ON business_members(busin
 ALTER TABLE business_members ADD COLUMN IF NOT EXISTS store_id UUID;
 ALTER TABLE business_members ENABLE ROW LEVEL SECURITY;
 
+INSERT INTO business_members (user_id, business_id, role, is_owner, is_active)
+SELECT b.owner_id, b.id, 'owner', true, true
+FROM businesses b
+WHERE b.owner_id IS NOT NULL
+ON CONFLICT (user_id, business_id) DO UPDATE SET
+  role = 'owner',
+  is_owner = true,
+  is_active = true,
+  updated_at = NOW();
+
 -- Realtime subscriptions table (for Socket.IO event tracking)
 CREATE TABLE IF NOT EXISTS realtime_subscriptions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
